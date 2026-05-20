@@ -13,6 +13,12 @@
 #define PLAYER_NUM 2
 #define MAX_DISCARD_NUM (STARTING_HAND_TOTAL_NUM * PLAYER_NUM)
 
+#define COLOR_RESET   "\x1b[0m"
+#define COLOR_BOLD    "\x1b[1m"
+#define COLOR_CYAN    "\x1b[36m"  // 数字カード用
+#define COLOR_YELLOW  "\x1b[33m"  // 記号カード用
+#define COLOR_GREEN   "\x1b[32m"  // プレイヤー名用
+
 typedef struct
 {
     int number;
@@ -131,12 +137,32 @@ void display_card_contents(Card card){
 
 //Display the specified player's hand.
 void display_player_hand(Game_State *game_state, int player){
-    printf("player%d: ",player);
+    printf(COLOR_BOLD COLOR_GREEN "=== Player %d's Hand (Total: %d) ===\n" COLOR_RESET, player, game_state->players[player].hand_num);
     int hand_num = game_state->players[player].hand_num;
+    printf("\n");
     for(int i = 0; i < hand_num; i++){
-        printf("%d:[",i);
-        display_card_contents(game_state->players[player].hand[i]);
-        printf("] ");
+        Card card = game_state->players[player].hand[i];
+        Card c = game_state->players[player].hand[i];
+
+        printf(" %2d: ", i);
+
+        if (c.is_number) {
+            printf(COLOR_CYAN "[ %2d ]" COLOR_RESET, c.number);
+        } else {
+            char *disp_symbol = c.symbol;
+            if (strcmp(disp_symbol, "return") == 0) {
+                disp_symbol = "Re";
+            }
+            printf(COLOR_YELLOW "[ %2s ]" COLOR_RESET, disp_symbol);
+        }
+
+        // 5枚ごとに改行を入れて画面端での折り返し崩れを防ぐ
+        if ((i + 1) % 5 == 0 || i == hand_num - 1) {
+            printf("\n");
+        } else {
+            // カード間の区切り線
+            printf(" |");
+        }
     }
     printf("\n");
 }
@@ -288,14 +314,11 @@ void update_state(Game_State *game_state,int player){
 }
 
 int main(void){
+    //srand((unsigned)time(NULL));
     srand(0);
     Game_State game_state;
     init_game(&game_state);
-    
-    // きれいなディスプレイを作る
-    // 入力を受け取る関数を作る
-    // 入力をもとに更新する。 
-    // display_hand(&game_state);
+
     game_state.next_player = 0;
 
     while(!game_state.is_end){
